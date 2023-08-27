@@ -6,24 +6,25 @@ import pytest
 from .build_hook import GradlePropertiesBuildHook
 from .cd import cd
 
-testdata = [
-    ("PACKAGE", "~=", "KEY", "4", "1.2.3", "PACKAGE~=1.2.3.4"),
-    ("PACKAGE", "~=", "KEY", "4.5", "1.2.3", "PACKAGE~=1.2.3.4.5"),
-    ("PACKAGE", ">=", "KEY", "4.5", "1.2.3", "PACKAGE>=1.2.3.4.5"),
-    ("PACKAGE", "~=", "KEY", "4.5", "1.2.3-6", "PACKAGE~=1.2.3.4.5rc6,<1.2.3.4.5rc7"),
-]
-
 
 @pytest.mark.parametrize(
-    "package,op,key,py_version,gradle_version,full_version", testdata
+    "package,op,key,py_version,gradle_version,rc_upper_bound,full_version",
+    [
+        ("P", "~=", "KEY", "4", "1.2.3", False, "P~=1.2.3.4"),
+        ("P", "~=", "KEY", "4.5", "1.2.3", False, "P~=1.2.3.4.5"),
+        ("P", ">=", "KEY", "4.5", "1.2.3", False, "P>=1.2.3.4.5"),
+        ("P", "~=", "KEY", "4.5", "1.2.3-6", False, "P~=1.2.3.4.5rc6"),
+        ("P", "~=", "KEY", "4.5", "1.2.3-6", True, "P~=1.2.3.4.5rc6,<1.2.3.4.5rc7"),
+    ],
 )
 def test_gradle_properties_deps(
     tmp_path: Path,
-    gradle_version: str,
     package: str,
     op: str,
     key: str,
     py_version: str,
+    gradle_version: str,
+    rc_upper_bound: bool,
     full_version: str,
 ):
     # arrange
@@ -36,6 +37,7 @@ def test_gradle_properties_deps(
                     "op": op,
                     "key": key,
                     "py-version": py_version,
+                    "rc-upper-bound": rc_upper_bound,
                 }
             ],
         },

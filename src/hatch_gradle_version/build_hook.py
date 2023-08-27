@@ -16,6 +16,16 @@ class GradleDependency(BaseModel):
     key: str
     py_version: str = Field(alias="py-version")
     suffix: str = ""
+    rc_upper_bound: bool = Field(alias="rc-upper-bound", default=False)
+    """If True and gradle_version has a pre-release suffix (eg. `0.1.0-1`), add a
+    corresponding exclusive upper bound for the next RC version (eg. `<0.1.0.1.0rc2`).
+    
+    If True, the operators `>=` and `~=` effectively become `==`. If False, pip may
+    install a later prerelease or a released version. There's not really a "best"
+    option, which is why this flag exists.
+
+    The default is `False`. We think this *should* work in more cases than not.
+    """
 
     def version_specifier(self, p: jproperties.Properties, app: Application):
         gradle = self.gradle_version(p)
@@ -23,7 +33,7 @@ class GradleDependency(BaseModel):
         full_version = gradle.full_version(self.py_version, self.suffix)
         lower_bound = self.op + full_version
 
-        if not gradle.rc:
+        if not (gradle.rc and self.rc_upper_bound):
             return self.package + lower_bound
 
         if "<" not in self.op:
