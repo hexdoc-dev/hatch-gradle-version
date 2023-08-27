@@ -23,12 +23,16 @@ dev = [
     "black==23.7.0",
     "isort==5.12.0",
 ]
+publish = [
+    "build",
+    "twine",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/object-Object/hatch-gradle-version"
 "Bug Tracker" = "https://github.com/object-Object/hatch-gradle-version/issues"
 
-[tool.hatch.build]
+[tool.hatch.build.targets.wheel]
 packages = ["src/hatch_gradle_version"]
 
 [project.entry-points.hatch]
