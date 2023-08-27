@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hatch-gradle-version"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name="object-Object", email="object@objectobject.ca" },
 ]
@@ -16,12 +16,14 @@ requires-python = ">=3.10"
 dependencies = [
     "hatchling",
     "jproperties",
+    "pydantic>=2.3.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black==23.7.0",
     "isort==5.12.0",
+    "pytest>=7.3.1",
 ]
 publish = [
     "build",
@@ -37,6 +39,13 @@ packages = ["src/hatch_gradle_version"]
 
 [project.entry-points.hatch]
 gradle_version = "hatch_gradle_version.hooks"
+
+# pytest
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+
+# formatting/linting
 
 [tool.isort]
 profile = "black"
@@ -85,11 +94,9 @@ reportWildcardImportFromLibrary = "error"
 
 reportMissingTypeArgument = "warning"
 reportPrivateUsage = "warning"
-reportUnknownArgumentType = "warning"
 reportUnknownLambdaType = "warning"
-reportUnknownMemberType = "warning"
 reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance =  	"warning"
+reportUnnecessaryIsInstance = "warning"
 reportUnusedClass = "warning"
 reportUnusedExpression = "warning"
 reportUnusedFunction = "warning"

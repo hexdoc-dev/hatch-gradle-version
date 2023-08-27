@@ -1,57 +1,33 @@
-# pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false
-
-import re
 from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-import jproperties  # pyright: ignore[reportMissingTypeStubs]
 from hatchling.version.source.plugin.interface import VersionSourceInterface
+from pydantic import BaseModel, Field
 
-GRADLE_VERSION_RE = re.compile(
-    r"""
-    v?
-    (?P<version>
-        \d+
-        (?:\.\d+)*
-    )
-    (?:
-        -
-        (?P<rc>
-            \d+
-            (?:\.\d+)*
-        )
-    )?
-    """,
-    re.VERBOSE,
-)
+from .gradle import GradleVersion, load_properties
+
+
+class PropertiesVersionSourceConfig(BaseModel):
+    py_version: str = Field(alias="py-version")
+
+    path: Path = Path("gradle.properties")
+    key: str = "modVersion"
 
 
 class PropertiesVersionSource(VersionSourceInterface):
     PLUGIN_NAME = "gradle-properties"
 
     def get_version_data(self) -> dict[str, Any]:
-        p = jproperties.Properties()
-        with open(self.full_path, "rb") as f:
-            p.load(f, "utf-8")
+        p = load_properties(self.full_path)
+        gradle = GradleVersion.from_properties(p, self.key)
 
-        parent, pre = self.parse_gradle_version(p)
-        pre = f".rc{pre}" if pre is not None else ""
-
-        version = f"{parent}.{self.py_version}{pre}"
-        return {"version": version}
+        return {
+            "version": gradle.full_version(self.py_version, ""),
+        }
 
     def set_version(self, version: str, version_data: dict[str, Any]) -> None:
         raise NotImplementedError  # TODO: implement
-
-    def parse_gradle_version(self, p: jproperties.Properties) -> tuple[str, str | None]:
-        gradle_version = str(p[self.key].data)
-
-        match = GRADLE_VERSION_RE.match(gradle_version)
-        if match is None:
-            raise ValueError(f"Failed to parse version {self.key}={gradle_version}")
-
-        return match["version"], match["rc"]
 
     @property
     def full_path(self):
@@ -65,21 +41,17 @@ class PropertiesVersionSource(VersionSourceInterface):
     # config values
 
     @cached_property
-    def path(self) -> Path:
-        match self.config.get("path", "gradle.properties"):
-            case str(path_str):
-                return Path(path_str)
-            case Path() as path:
-                return path
-            case _:
-                raise TypeError(
-                    f"Option `path` for version source `{self.PLUGIN_NAME}` must be a string"
-                )
+    def typed_config(self):
+        return PropertiesVersionSourceConfig.model_validate(self.config)
 
-    @cached_property
-    def key(self) -> str:
-        return self.config.get("key", "modVersion")
+    @property
+    def py_version(self):
+        return self.typed_config.py_version
 
-    @cached_property
-    def py_version(self) -> str:
-        return self.config["py_version"]
+    @property
+    def path(self):
+        return self.typed_config.path
+
+    @property
+    def key(self):
+        return self.typed_config.key
