@@ -7,7 +7,7 @@ from hatchling.bridge.app import Application
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from pydantic import BaseModel, Field
 
-from hatch_gradle_version.gradle import GradleVersion, load_properties
+from ..common.gradle import GradleVersion, load_properties
 
 
 class GradleDependency(BaseModel):
@@ -15,7 +15,6 @@ class GradleDependency(BaseModel):
     op: str
     key: str
     py_version: str = Field(alias="py-version")
-    suffix: str = ""
     rc_upper_bound: bool = Field(alias="rc-upper-bound", default=False)
     """If True and gradle_version has a pre-release suffix (eg. `0.1.0-1`), add a
     corresponding exclusive upper bound for the next RC version (eg. `<0.1.0.1.0rc2`).
@@ -30,10 +29,10 @@ class GradleDependency(BaseModel):
     def version_specifier(self, p: jproperties.Properties, app: Application):
         gradle = self.gradle_version(p)
 
-        full_version = gradle.full_version(self.py_version, self.suffix)
+        full_version = gradle.full_version(self.py_version)
         lower_bound = self.op + full_version
 
-        if not (gradle.rc and self.rc_upper_bound):
+        if not (gradle.rc is not None and self.rc_upper_bound):
             return self.package + lower_bound
 
         if "<" not in self.op:
@@ -41,7 +40,7 @@ class GradleDependency(BaseModel):
                 f"WARNING: Dependency on package {self.package} will ONLY accept {full_version} (because gradle_version {self.gradle_version} is a prerelease)."
             )
 
-        upper_bound = "<" + gradle.next_full_rc_version(self.py_version, self.suffix)
+        upper_bound = "<" + gradle.full_version(self.py_version, next_rc=True)
         return f"{self.package}{lower_bound},{upper_bound}"
 
     def gradle_version(self, p: jproperties.Properties):

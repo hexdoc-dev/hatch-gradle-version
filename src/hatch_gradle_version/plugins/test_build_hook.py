@@ -3,19 +3,24 @@ from typing import Any
 
 import pytest
 
+from ..common.cd import cd
 from .build_hook import GradlePropertiesBuildHook
-from .cd import cd
 
 
 @pytest.mark.parametrize(
-    "package,op,key,py_version,gradle_version,rc_upper_bound,full_version",
+    # fmt: off
+    "package, op,key,py_version,gradle_version,rc_upper_bound,full_version",
     [
-        ("P", "~=", "KEY", "4", "1.2.3", False, "P~=1.2.3.4"),
-        ("P", "~=", "KEY", "4.5", "1.2.3", False, "P~=1.2.3.4.5"),
-        ("P", ">=", "KEY", "4.5", "1.2.3", False, "P>=1.2.3.4.5"),
-        ("P", "~=", "KEY", "4.5", "1.2.3-6", False, "P~=1.2.3.4.5rc6"),
-        ("P", "~=", "KEY", "4.5", "1.2.3-6", True, "P~=1.2.3.4.5rc6,<1.2.3.4.5rc7"),
+        ("P", "~=", "KEY", "4",       "1.2.3",   False, "P~=1.2.3.4"),
+        ("P", "~=", "KEY", "4.5",     "1.2.3",   False, "P~=1.2.3.4.5"),
+        ("P", ">=", "KEY", "4.5",     "1.2.3",   False, "P>=1.2.3.4.5"),
+        ("P", "~=", "KEY", "4.5",     "1.2.3-6", False, "P~=1.2.3.4.5rc6"),
+        ("P", "~=", "KEY", "4.5",     "1.2.3-6", True,  "P~=1.2.3.4.5rc6,<1.2.3.4.5rc7"),
+        ("P", "~=", "KEY", "4.5dev6", "1.2.3",   False, "P~=1.2.3.4.5.dev6"),
+        ("P", "~=", "KEY", "4.5dev7", "1.2.3-6", False, "P~=1.2.3.4.5rc6.dev7"),
+        ("P", "~=", "KEY", "4.5dev8", "1.2.3-6", True,  "P~=1.2.3.4.5rc6.dev8,<1.2.3.4.5rc7.dev8"),
     ],
+    # fmt: on
 )
 def test_gradle_properties_deps(
     tmp_path: Path,

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hatch-gradle-version"
-version = "0.2.1"
+version = "0.3.0"
 authors = [
     { name="object-Object", email="object@objectobject.ca" },
 ]
@@ -38,7 +38,7 @@ publish = [
 packages = ["src/hatch_gradle_version"]
 
 [project.entry-points.hatch]
-gradle_version = "hatch_gradle_version.hooks"
+gradle_version = "hatch_gradle_version.plugins"
 
 # pytest
 
