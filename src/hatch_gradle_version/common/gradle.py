@@ -24,6 +24,7 @@ GRADLE_VERSION_RE = re.compile(
 
 
 class GradleVersion(BaseModel):
+    raw_version: str
     version: str
     rc: int | None
 
@@ -35,7 +36,7 @@ class GradleVersion(BaseModel):
         if match is None:
             raise ValueError(f"Failed to parse version {key}={raw_version}")
 
-        return cls.model_validate(match.groupdict())
+        return cls.model_validate(match.groupdict() | {"raw_version": raw_version})
 
     def full_version(
         self,
@@ -72,6 +73,9 @@ class GradleVersion(BaseModel):
         if self.rc is None:
             raise ValueError("Tried to call next_rc on a non-rc version")
         return self.rc + 1
+
+    def __str__(self) -> str:
+        return self.raw_version
 
 
 def load_properties(path: Path):
