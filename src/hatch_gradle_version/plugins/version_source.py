@@ -42,11 +42,16 @@ class PropertiesVersionSource(VersionSourceInterface):
             )
         py_version = match["version"]
 
-        return {
-            "version": gradle.full_version(py_version),
+        version = gradle.full_version(py_version)
+        version_data = {
+            "version": version,
             "gradle_version": gradle,
             "py_version": py_version,
         }
+
+        # write here because otherwise the other version constants get outdated
+        self.set_version(version, version_data)
+        return version_data
 
     def set_version(self, version: str, version_data: dict[str, Any]) -> None:
         self.py_path.write_text(
