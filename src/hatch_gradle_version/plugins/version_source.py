@@ -1,4 +1,3 @@
-import os
 import re
 from functools import cached_property
 from pathlib import Path
@@ -7,7 +6,7 @@ from typing import Any
 
 from hatchling.version.core import DEFAULT_PATTERN
 from hatchling.version.source.plugin.interface import VersionSourceInterface
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from ..common.gradle import GradleVersion, load_properties
 
@@ -21,20 +20,9 @@ DEFAULT_REGEX = re.compile(DEFAULT_PATTERN, flags=re.MULTILINE)
 
 class PropertiesVersionSourceConfig(BaseModel):
     py_path: Path = Field(alias="py-path")
-    gradle_path: Path = Field(alias="gradle-path")
+
+    gradle_path: Path = Field(alias="gradle-path", default=Path("gradle.properties"))
     key: str = "modVersion"
-
-    @model_validator(mode="before")
-    def _default_gradle_path(cls, value: Any) -> Any:
-        if not isinstance(value, dict):
-            return value
-
-        return value | {
-            "gradle-path": os.getenv(
-                "HATCH_GRADLE_PATH",
-                value.get("gradle-path", "gradle.properties"),
-            ),
-        }
 
 
 class PropertiesVersionSource(VersionSourceInterface):
@@ -62,7 +50,6 @@ class PropertiesVersionSource(VersionSourceInterface):
         }
 
         # write here because otherwise the other version constants get outdated
-        # TODO: write to a temporary file, then copy at the end
         self.set_version(version, version_data)
         return version_data
 

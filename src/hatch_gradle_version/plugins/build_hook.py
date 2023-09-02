@@ -1,4 +1,3 @@
-import os
 from functools import cached_property
 from pathlib import Path
 from typing import Any
@@ -6,7 +5,7 @@ from typing import Any
 import jproperties  # pyright: ignore[reportMissingTypeStubs]
 from hatchling.bridge.app import Application
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from ..common.gradle import GradleVersion, load_properties
 
@@ -49,20 +48,8 @@ class GradleDependency(BaseModel):
 
 
 class GradlePropertiesBuildHookConfig(BaseModel):
-    path: Path
+    path: Path = Path("gradle.properties")
     gradle_dependencies: list[GradleDependency] = Field(alias="gradle-dependencies")
-
-    @model_validator(mode="before")
-    def _default_path(cls, value: Any) -> Any:
-        if not isinstance(value, dict):
-            return value
-
-        return value | {
-            "path": os.getenv(
-                "HATCH_GRADLE_PATH",
-                value.get("path", "gradle.properties"),
-            ),
-        }
 
 
 class GradlePropertiesBuildHook(BuildHookInterface[Any]):
