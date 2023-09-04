@@ -62,6 +62,7 @@ class GradlePropertiesBuildHookConfig(BaseModel):
         return self
 
 
+# TODO: this should probably be a metadata hook, actually
 class GradlePropertiesBuildHook(BuildHookInterface[Any]):
     PLUGIN_NAME = "gradle-properties"
 
