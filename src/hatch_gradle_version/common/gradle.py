@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import re
+import warnings
 from pathlib import Path
 
 import jproperties  # pyright: ignore[reportMissingTypeStubs]
 from packaging.version import Version
-from pydantic import BaseModel
+
+from .model import DefaultModel, KebabModel
 
 GRADLE_VERSION_RE = re.compile(
     r"""
@@ -23,7 +25,8 @@ GRADLE_VERSION_RE = re.compile(
 )
 
 
-class GradleVersion(BaseModel):
+# this uses Model so I can be lazy with constructing it from a regex
+class GradleVersion(DefaultModel):
     raw_version: str
     version: str
     rc: int | None
@@ -83,3 +86,40 @@ def load_properties(path: Path):
     with open(path, "rb") as f:
         p.load(f, "utf-8")
     return p
+
+
+class GradleDependency(KebabModel):
+    package: str
+    op: str
+    key: str
+    py_version: str
+    rc_upper_bound: bool = False
+    """If True and gradle_version has a pre-release suffix (eg. `0.1.0-1`), add a
+    corresponding exclusive upper bound for the next RC version (eg. `<0.1.0.1.0rc2`).
+    
+    If True, the operators `>=` and `~=` effectively become `==`. If False, pip may
+    install a later prerelease or a released version. There's not really a "best"
+    option, which is why this flag exists.
+
+    The default is `False`. This *should* work in more cases than not.
+    """
+
+    def version_specifier(self, p: jproperties.Properties):
+        gradle = self.gradle_version(p)
+
+        full_version = gradle.full_version(self.py_version)
+        lower_bound = self.op + full_version
+
+        if gradle.rc is None or not self.rc_upper_bound:
+            return self.package + lower_bound
+
+        if "<" not in self.op:
+            warnings.warn(
+                f"Dependency on package `{self.package}` will ONLY accept `{full_version}` (`{gradle}` is a prerelease and `rc-upper-bound` is enabled)."
+            )
+
+        upper_bound = "<" + gradle.full_version(self.py_version, next_rc=True)
+        return f"{self.package}{lower_bound},{upper_bound}"
+
+    def gradle_version(self, p: jproperties.Properties):
+        return GradleVersion.from_properties(p, self.key)

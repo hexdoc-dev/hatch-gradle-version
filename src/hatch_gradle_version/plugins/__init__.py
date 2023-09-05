@@ -1,6 +1,6 @@
 from hatchling.plugin import hookimpl
 
-from .build_hook import GradlePropertiesBuildHook
+from .metadata_hook import GradlePropertiesMetadataHook
 from .version_scheme import GradleVersionScheme
 from .version_source import PropertiesVersionSource
 
@@ -16,5 +16,5 @@ def hatch_register_version_scheme():
 
 
 @hookimpl
-def hatch_register_build_hook():
-    return GradlePropertiesBuildHook
+def hatch_register_metadata_hook():
+    return GradlePropertiesMetadataHook

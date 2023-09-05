@@ -1,10 +1,11 @@
+import copy
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from ..common.cd import cd
-from .build_hook import GradlePropertiesBuildHook
+from .metadata_hook import GradlePropertiesMetadataHook
 
 
 @pytest.mark.parametrize(
@@ -33,10 +34,10 @@ def test_gradle_properties_deps(
     full_version: str,
 ):
     # arrange
-    hook = GradlePropertiesBuildHook(
+    hook = GradlePropertiesMetadataHook(
         root="",
         config={
-            "gradle-dependencies": [
+            "dependencies": [
                 {
                     "package": package,
                     "op": op,
@@ -46,18 +47,19 @@ def test_gradle_properties_deps(
                 }
             ],
         },
-        build_config=None,
-        metadata=None,  # type: ignore
-        directory="",
-        target_name="",
-        app=None,
     )
-    build_data = dict[str, Any]()
     (tmp_path / "gradle.properties").write_text(f"{key}={gradle_version}")
+    orig_metadata = {
+        "dynamic": ["dependencies", "optional-dependencies"],
+    }
 
     # act
+    metadata: dict[str, Any] = copy.deepcopy(orig_metadata)
     with cd(tmp_path):
-        hook.initialize("", build_data)
+        hook.update(metadata)
 
     # assert
-    assert build_data["dependencies"] == [full_version]
+    assert metadata == orig_metadata | {
+        "dependencies": [full_version],
+        "optional-dependencies": {},
+    }

@@ -7,9 +7,11 @@ from typing import Any
 
 from hatchling.version.core import DEFAULT_PATTERN
 from hatchling.version.source.plugin.interface import VersionSourceInterface
-from pydantic import BaseModel, Field, model_validator
+from pydantic import model_validator
 
 from ..common.gradle import GradleVersion, load_properties
+from ..common.model import KebabModel
+from ..common.path import assert_exists
 
 PY_VERSION_REGEX = re.compile(
     r'(?i)^(PY_VERSION) *= *([\'"])v?(?P<version>.+?)\2',
@@ -17,21 +19,6 @@ PY_VERSION_REGEX = re.compile(
 )
 
 DEFAULT_REGEX = re.compile(DEFAULT_PATTERN, flags=re.MULTILINE)
-
-
-class PropertiesVersionSourceConfig(BaseModel):
-    py_path: Path = Field(alias="py-path")
-    gradle_path: Path = Field(alias="gradle-path", default=Path("gradle.properties"))
-    key: str = "modVersion"
-
-    @model_validator(mode="after")
-    def _prepend_gradle_dir(self):
-        gradle_dir = os.getenv("HATCH_GRADLE_DIR")
-        if gradle_dir is None:
-            return self
-
-        self.gradle_path = Path(gradle_dir) / self.gradle_path
-        return self
 
 
 class PropertiesVersionSource(VersionSourceInterface):
@@ -52,13 +39,13 @@ class PropertiesVersionSource(VersionSourceInterface):
         py_version = match["version"]
 
         version = gradle.full_version(py_version)
+
+        # write here because otherwise the other version constants get outdated
         version_data = {
             "version": version,
             "gradle_version": gradle,
             "py_version": py_version,
         }
-
-        # write here because otherwise the other version constants get outdated
         self.set_version(version, version_data)
         return version_data
 
@@ -88,26 +75,37 @@ class PropertiesVersionSource(VersionSourceInterface):
 
     @cached_property
     def typed_config(self):
-        return PropertiesVersionSourceConfig.model_validate(self.config)
+        return self.Config.model_validate(self.config)
 
     @property
     def gradle_path(self):
         path = Path(self.root) / self.typed_config.gradle_path
-        if not path.is_file():
-            raise FileNotFoundError(
-                f"File does not exist or is not a file: {self.typed_config.gradle_path}"
-            )
+        assert_exists(path)
         return path
 
     @property
     def py_path(self):
         path = Path(self.root) / self.typed_config.py_path
-        if not path.is_file():
-            raise FileNotFoundError(
-                f"File does not exist or is not a file: {self.typed_config.py_path}"
-            )
+        assert_exists(path)
         return path
 
     @property
     def key(self):
         return self.typed_config.key
+
+    class Config(KebabModel):
+        source: str
+        py_path: Path
+
+        scheme: str | None = None
+        gradle_path: Path = Path("gradle.properties")
+        key: str = "modVersion"
+
+        @model_validator(mode="after")
+        def _prepend_gradle_dir(self):
+            gradle_dir = os.getenv("HATCH_GRADLE_DIR")
+            if gradle_dir is None:
+                return self
+
+            self.gradle_path = Path(gradle_dir) / self.gradle_path
+            return self
