@@ -2,6 +2,8 @@ from typing import Any
 
 from hatchling.version.scheme.standard import StandardScheme
 
+from hatch_gradle_version.plugins.version_source import VersionData
+
 from ..common.gradle import GradleVersion
 
 
@@ -12,7 +14,7 @@ class GradleVersionScheme(StandardScheme):
         self,
         desired_version: str,
         original_version: str,
-        version_data: dict[str, Any],
+        version_data: dict[str, Any] | VersionData,
     ) -> str:
         assert isinstance(version_data["py_version"], str)
         assert isinstance(version_data["gradle_version"], GradleVersion)

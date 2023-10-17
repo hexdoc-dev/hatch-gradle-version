@@ -26,10 +26,11 @@ GRADLE_VERSION_RE = re.compile(
 
 
 # this uses Model so I can be lazy with constructing it from a regex
-class GradleVersion(DefaultModel):
+class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
     raw_version: str
     version: str
     rc: int | None
+    p: jproperties.Properties
 
     @classmethod
     def from_properties(cls, p: jproperties.Properties, key: str):
@@ -39,7 +40,11 @@ class GradleVersion(DefaultModel):
         if match is None:
             raise ValueError(f"Failed to parse version {key}={raw_version}")
 
-        return cls.model_validate(match.groupdict() | {"raw_version": raw_version})
+        data = match.groupdict() | {
+            "raw_version": raw_version,
+            "p": p,
+        }
+        return cls.model_validate(data)
 
     def full_version(
         self,
