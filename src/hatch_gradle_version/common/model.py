@@ -74,17 +74,17 @@ GradlePath = Annotated[Path, "GradlePath"]
 class HookModel(KebabModel, validate_default=True):
     PLUGIN_NAME: ClassVar[str]
 
-    root__: str = Field(alias="root", kw_only=False)
+    root__: str | Path = Field(alias="root", kw_only=False)
     config__: dict[str, Any] = Field(alias="config", kw_only=False)
 
-    def __init__(self, root: str, config: dict[str, Any]):
+    def __init__(self, root: str | Path, config: dict[str, Any]):
         self.__pydantic_validator__.validate_python(
             {"root": root, "config": config},
             self_instance=self,
         )
 
     @classmethod
-    def from_config(cls, root: str, config: dict[str, Any]):
+    def from_config(cls, root: str | Path, config: dict[str, Any]):
         return cls(root, config)
 
     @property
