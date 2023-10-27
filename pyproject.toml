@@ -39,7 +39,7 @@ publish = [
 packages = ["src/hatch_gradle_version"]
 
 [project.entry-points.hatch]
-gradle_version = "hatch_gradle_version.plugins"
+gradle_version = "hatch_gradle_version._hooks"
 
 # pytest
 
