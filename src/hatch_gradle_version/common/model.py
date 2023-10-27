@@ -71,7 +71,7 @@ ProjectPath = Annotated[Path, "ProjectPath"]
 GradlePath = Annotated[Path, "GradlePath"]
 
 
-class HookModel(KebabModel):
+class HookModel(KebabModel, validate_default=True):
     PLUGIN_NAME: ClassVar[str]
 
     root__: str = Field(alias="root", kw_only=False)

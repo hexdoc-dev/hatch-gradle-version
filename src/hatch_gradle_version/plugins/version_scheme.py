@@ -3,7 +3,7 @@ from typing import Any
 from hatchling.version.scheme.standard import StandardScheme
 
 from ..common.gradle import GradleVersion
-from .version_source.gradle_properties import VersionData
+from .version_source.base import VersionData
 
 
 class GradleVersionScheme(StandardScheme):

@@ -1,4 +1,5 @@
 from functools import cached_property
+from pathlib import Path
 from typing import Any
 
 from hatchling.metadata.plugin.interface import MetadataHookInterface
@@ -16,7 +17,7 @@ class GradlePropertiesMetadataHook(HookModel, MetadataHookInterface):
 
     dependencies: Dependencies = Field(default_factory=dict)
     optional_dependencies: dict[str, Dependencies] = Field(default_factory=dict)
-    path: GradlePath = Field(default="gradle.properties", validate_default=True)
+    path: GradlePath = Path("gradle.properties")
 
     def update(self, metadata: dict[str, Any]) -> None:
         """Implements MetadataHookInterface."""

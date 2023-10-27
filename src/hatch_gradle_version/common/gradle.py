@@ -17,8 +17,10 @@ GRADLE_VERSION_RE = re.compile(
         (?:\.\d+)*
     )
     (?:
-        -
-        (?P<rc>\d+)
+        -(?P<rc>\d+)
+    )?
+    (?:
+        \+(?P<build>.+)
     )?
     """,
     re.VERBOSE,
@@ -30,7 +32,8 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
     raw_version: str
     version: str
     rc: int | None
-    p: jproperties.Properties
+    build: str | None
+    extra_versions: dict[str, str]
 
     @classmethod
     def from_properties(cls, p: jproperties.Properties, key: str):
@@ -42,7 +45,7 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
 
         data = match.groupdict() | {
             "raw_version": raw_version,
-            "p": p,
+            "extra_versions": {key: repr(value.data) for key, value in p.items()},
         }
         return cls.model_validate(data)
 
