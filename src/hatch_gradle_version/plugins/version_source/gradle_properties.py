@@ -10,10 +10,9 @@ from hatchling.version.source.plugin.interface import VersionSourceInterface
 from pydantic import model_validator
 
 from hatch_gradle_version.common.codegen import write_code
-
-from ..common.gradle import GradleVersion, load_properties
-from ..common.model import KebabModel
-from ..common.path import assert_exists
+from hatch_gradle_version.common.gradle import GradleVersion, load_properties
+from hatch_gradle_version.common.model import KebabModel
+from hatch_gradle_version.common.path import assert_exists
 
 PY_VERSION_REGEX = re.compile(
     r'(?i)^(PY_VERSION) *= *([\'"])v?(?P<version>.+?)\2',

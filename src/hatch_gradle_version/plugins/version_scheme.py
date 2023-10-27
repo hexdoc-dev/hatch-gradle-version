@@ -2,9 +2,8 @@ from typing import Any
 
 from hatchling.version.scheme.standard import StandardScheme
 
-from hatch_gradle_version.plugins.version_source import VersionData
-
 from ..common.gradle import GradleVersion
+from .version_source.gradle_properties import VersionData
 
 
 class GradleVersionScheme(StandardScheme):

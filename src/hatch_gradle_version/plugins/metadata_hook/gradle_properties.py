@@ -6,10 +6,9 @@ from typing import Any
 from hatchling.metadata.plugin.interface import MetadataHookInterface
 from pydantic import Field, model_validator
 
-from hatch_gradle_version.common.decorators import listify
-
-from ..common.gradle import GradleDependency, load_properties
-from ..common.model import KebabModel
+from ...common.decorators import listify
+from ...common.gradle import GradleDependency, load_properties
+from ...common.model import KebabModel
 
 Dependencies = list[str | GradleDependency]
 

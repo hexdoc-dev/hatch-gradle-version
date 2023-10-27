@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from ..common.cd import cd
-from .metadata_hook import GradlePropertiesMetadataHook
+from .metadata_hook.gradle_properties import GradlePropertiesMetadataHook
 
 
 @pytest.mark.parametrize(

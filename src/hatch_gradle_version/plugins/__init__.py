@@ -1,8 +1,8 @@
 from hatchling.plugin import hookimpl
 
-from .metadata_hook import GradlePropertiesMetadataHook
+from .metadata_hook.gradle_properties import GradlePropertiesMetadataHook
 from .version_scheme import GradleVersionScheme
-from .version_source import PropertiesVersionSource
+from .version_source.gradle_properties import PropertiesVersionSource
 
 
 @hookimpl
