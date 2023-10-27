@@ -83,6 +83,10 @@ class HookModel(KebabModel, validate_default=True):
             self_instance=self,
         )
 
+    @classmethod
+    def from_config(cls, root: str, config: dict[str, Any]):
+        return cls(root, config)
+
     @property
     def root(self):
         return self.root__

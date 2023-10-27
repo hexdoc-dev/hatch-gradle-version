@@ -2,6 +2,7 @@ import copy
 from pathlib import Path
 
 import pytest
+from pytest import MonkeyPatch
 
 from .gradle_properties import GradlePropertiesMetadataHook
 
@@ -30,7 +31,7 @@ def test_gradle_properties_deps(
     gradle_version: str,
     rc_upper_bound: bool,
     full_version: str,
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: MonkeyPatch,
 ):
     # arrange
     monkeypatch.setenv("HATCH_GRADLE_DIR", "gradle_dir")

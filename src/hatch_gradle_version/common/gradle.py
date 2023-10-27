@@ -37,15 +37,20 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
 
     @classmethod
     def from_properties(cls, p: jproperties.Properties, key: str):
-        raw_version = str(p[key].data)
+        return cls.from_raw(
+            raw_version=str(p[key].data),
+            extra_versions={key: repr(value.data) for key, value in p.items()},
+        )
 
+    @classmethod
+    def from_raw(cls, raw_version: str, extra_versions: dict[str, str]):
         match = GRADLE_VERSION_RE.match(raw_version)
         if match is None:
-            raise ValueError(f"Failed to parse version {key}={raw_version}")
+            raise ValueError(f"Failed to parse version: {raw_version}")
 
         data = match.groupdict() | {
             "raw_version": raw_version,
-            "extra_versions": {key: repr(value.data) for key, value in p.items()},
+            "extra_versions": extra_versions,
         }
         return cls.model_validate(data)
 
