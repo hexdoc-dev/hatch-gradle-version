@@ -9,8 +9,8 @@ from hatch_gradle_version.common.model import GradlePath
 from .base import BaseVersionSource
 
 
-class ModJSONVersionSource(BaseVersionSource):
-    PLUGIN_NAME = "mod-json"
+class JSONVersionSource(BaseVersionSource):
+    PLUGIN_NAME = "json"
 
     json_path: GradlePath
     key: Annotated[list[str], Field(min_length=1)]

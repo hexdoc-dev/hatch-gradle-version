@@ -5,16 +5,16 @@ from pytest import MonkeyPatch
 
 from hatch_gradle_version.common.gradle import GradleVersion
 
-from .mod_json import ModJSONVersionSource
+from .json import JSONVersionSource
 
 
-def test_mod_json_version(tmp_path: Path, monkeypatch: MonkeyPatch):
+def test_json_version(tmp_path: Path, monkeypatch: MonkeyPatch):
     # arrange
     monkeypatch.setenv("HATCH_GRADLE_DIR", "gradle_dir")
 
-    mod_json = tmp_path / "gradle_dir" / "mod.json"
-    mod_json.parent.mkdir()
-    mod_json.write_text(
+    json = tmp_path / "gradle_dir" / "mod.json"
+    json.parent.mkdir()
+    json.write_text(
         dedent(
             """
             {
@@ -36,10 +36,10 @@ def test_mod_json_version(tmp_path: Path, monkeypatch: MonkeyPatch):
         )
     )
 
-    hook = ModJSONVersionSource.from_config(
+    hook = JSONVersionSource.from_config(
         tmp_path.as_posix(),
         {
-            "source": "mod-json",
+            "source": "json",
             "py-path": "",
             "json-path": "mod.json",
             "key": "core.version",

@@ -117,22 +117,17 @@ class GradleDependency(KebabModel):
     The default is `False`. This *should* work in more cases than not.
     """
 
-    def version_specifier(self, p: jproperties.Properties):
-        gradle = self.gradle_version(p)
-
-        full_version = gradle.full_version(self.py_version)
+    def version_specifier(self, gradle_version: GradleVersion):
+        full_version = gradle_version.full_version(self.py_version)
         lower_bound = self.op + full_version
 
-        if gradle.rc is None or not self.rc_upper_bound:
+        if gradle_version.rc is None or not self.rc_upper_bound:
             return self.package + lower_bound
 
         if "<" not in self.op:
             warnings.warn(
-                f"Dependency on package `{self.package}` will ONLY accept `{full_version}` (`{gradle}` is a prerelease and `rc-upper-bound` is enabled)."
+                f"Dependency on package `{self.package}` will ONLY accept `{full_version}` (`{gradle_version}` is a prerelease and `rc-upper-bound` is enabled)."
             )
 
-        upper_bound = "<" + gradle.full_version(self.py_version, next_rc=True)
+        upper_bound = "<" + gradle_version.full_version(self.py_version, next_rc=True)
         return f"{self.package}{lower_bound},{upper_bound}"
-
-    def gradle_version(self, p: jproperties.Properties):
-        return GradleVersion.from_properties(p, self.key)
