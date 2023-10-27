@@ -28,7 +28,7 @@ class VersionData(TypedDict):
     py_version: str
 
 
-class PropertiesVersionSource(VersionSourceInterface):
+class GradlePropertiesVersionSource(VersionSourceInterface):
     PLUGIN_NAME = "gradle-properties"
 
     def get_version_data(self):
