@@ -10,4 +10,9 @@
     "isort.importStrategy": "fromEnvironment",
     "python.languageServer": "Pylance",
     "python.analysis.diagnosticMode": "workspace",
+    "python.testing.pytestArgs": [
+        "src"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }

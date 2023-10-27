@@ -1,7 +1,16 @@
-from typing import Any
+import os
+from pathlib import Path
+from typing import Annotated, Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, ValidationError
-from typing_extensions import dataclass_transform
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 DEFAULT_CONFIG = ConfigDict(extra="forbid")
 
@@ -10,7 +19,6 @@ def to_kebab(string: str) -> str:
     return string.replace("_", "-")
 
 
-@dataclass_transform()
 class DefaultModel(BaseModel):
     model_config = DEFAULT_CONFIG
 
@@ -54,6 +62,61 @@ class DefaultModel(BaseModel):
             raise RuntimeError(e)
 
 
-@dataclass_transform()
 class KebabModel(DefaultModel, alias_generator=to_kebab):
     pass
+
+
+ProjectPath = Annotated[Path, "ProjectPath"]
+
+GradlePath = Annotated[Path, "GradlePath"]
+
+
+class HookModel(KebabModel):
+    PLUGIN_NAME: ClassVar[str]
+
+    root__: str = Field(alias="root", kw_only=False)
+    config__: dict[str, Any] = Field(alias="config", kw_only=False)
+
+    def __init__(self, root: str, config: dict[str, Any]):
+        self.__pydantic_validator__.validate_python(
+            {"root": root, "config": config},
+            self_instance=self,
+        )
+
+    @property
+    def root(self):
+        return self.root__
+
+    @property
+    def config(self):
+        return self.config__
+
+    @model_validator(mode="before")
+    def _merge_with_config(cls, value: Any):
+        match value:
+            case {"config": dict() as config}:
+                return config | value
+            case _:
+                return value
+
+    @field_validator("*", mode="after")
+    @classmethod
+    def _resolve_paths(cls, value: Any, info: ValidationInfo):
+        root = info.data.get("root__")
+        if not root:
+            return value
+        root = Path(root)
+
+        assert info.field_name
+        field_info = cls.model_fields[info.field_name]
+
+        for annotation in field_info.metadata:
+            match annotation:
+                case "ProjectPath":
+                    return root / value
+                case "GradlePath":
+                    return root / os.getenv("HATCH_GRADLE_DIR", "") / value
+                case _:
+                    pass
+
+        return value

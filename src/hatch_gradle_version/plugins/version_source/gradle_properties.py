@@ -1,18 +1,14 @@
-import os
 import re
-from functools import cached_property
 from pathlib import Path
 from typing import Any, TypedDict
 
 from casefy import casefy
 from hatchling.version.core import DEFAULT_PATTERN
 from hatchling.version.source.plugin.interface import VersionSourceInterface
-from pydantic import model_validator
 
 from hatch_gradle_version.common.codegen import write_code
 from hatch_gradle_version.common.gradle import GradleVersion, load_properties
-from hatch_gradle_version.common.model import KebabModel
-from hatch_gradle_version.common.path import assert_exists
+from hatch_gradle_version.common.model import GradlePath, HookModel, ProjectPath
 
 PY_VERSION_REGEX = re.compile(
     r'(?i)^(PY_VERSION) *= *([\'"])v?(?P<version>.+?)\2',
@@ -28,8 +24,15 @@ class VersionData(TypedDict):
     py_version: str
 
 
-class GradlePropertiesVersionSource(VersionSourceInterface):
+class GradlePropertiesVersionSource(HookModel, VersionSourceInterface):
     PLUGIN_NAME = "gradle-properties"
+
+    source: str
+    py_path: ProjectPath
+
+    scheme: str | None = None
+    gradle_path: GradlePath = Path("gradle.properties")
+    key: str = "modVersion"
 
     def get_version_data(self):
         # load gradle version from gradle.properties
@@ -80,45 +83,6 @@ class GradlePropertiesVersionSource(VersionSourceInterface):
                 for key, value in sorted(version_data["gradle_version"].p.items())
             ),
         )
-
-    # config values
-
-    @cached_property
-    def typed_config(self):
-        return self.Config.model_validate(self.config)
-
-    @property
-    def gradle_path(self):
-        path = Path(self.root) / self.typed_config.gradle_path
-        assert_exists(path)
-        return path
-
-    @property
-    def py_path(self):
-        path = Path(self.root) / self.typed_config.py_path
-        assert_exists(path)
-        return path
-
-    @property
-    def key(self):
-        return self.typed_config.key
-
-    class Config(KebabModel):
-        source: str
-        py_path: Path
-
-        scheme: str | None = None
-        gradle_path: Path = Path("gradle.properties")
-        key: str = "modVersion"
-
-        @model_validator(mode="after")
-        def _prepend_gradle_dir(self):
-            gradle_dir = os.getenv("HATCH_GRADLE_DIR")
-            if gradle_dir is None:
-                return self
-
-            self.gradle_path = Path(gradle_dir) / self.gradle_path
-            return self
 
 
 def format_key(key: str, *reserved: str):

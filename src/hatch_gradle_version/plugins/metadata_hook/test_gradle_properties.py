@@ -1,11 +1,9 @@
 import copy
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from ..common.cd import cd
-from .metadata_hook.gradle_properties import GradlePropertiesMetadataHook
+from .gradle_properties import GradlePropertiesMetadataHook
 
 
 @pytest.mark.parametrize(
@@ -32,11 +30,18 @@ def test_gradle_properties_deps(
     gradle_version: str,
     rc_upper_bound: bool,
     full_version: str,
+    monkeypatch: pytest.MonkeyPatch,
 ):
     # arrange
+    monkeypatch.setenv("HATCH_GRADLE_DIR", "gradle_dir")
+
+    gradle_properties = tmp_path / "gradle_dir" / "gradle.properties"
+    gradle_properties.parent.mkdir()
+    gradle_properties.write_text(f"{key}={gradle_version}")
+
     hook = GradlePropertiesMetadataHook(
-        root="",
-        config={
+        tmp_path.as_posix(),
+        {
             "dependencies": [
                 {
                     "package": package,
@@ -48,15 +53,17 @@ def test_gradle_properties_deps(
             ],
         },
     )
-    (tmp_path / "gradle.properties").write_text(f"{key}={gradle_version}")
+
     orig_metadata = {
-        "dynamic": ["dependencies", "optional-dependencies"],
+        "dynamic": [
+            "dependencies",
+            "optional-dependencies",
+        ],
     }
 
     # act
-    metadata: dict[str, Any] = copy.deepcopy(orig_metadata)
-    with cd(tmp_path):
-        hook.update(metadata)
+    metadata = copy.deepcopy(orig_metadata)
+    hook.update(metadata)
 
     # assert
     assert metadata == orig_metadata | {

@@ -1,26 +1,29 @@
-import os
 from functools import cached_property
-from pathlib import Path
 from typing import Any
 
 from hatchling.metadata.plugin.interface import MetadataHookInterface
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from ...common.decorators import listify
-from ...common.gradle import GradleDependency, load_properties
-from ...common.model import KebabModel
+from hatch_gradle_version.common.decorators import listify
+from hatch_gradle_version.common.gradle import GradleDependency, load_properties
+from hatch_gradle_version.common.model import GradlePath, HookModel
 
 Dependencies = list[str | GradleDependency]
 
 
-class GradlePropertiesMetadataHook(MetadataHookInterface):
+class GradlePropertiesMetadataHook(HookModel, MetadataHookInterface):
     PLUGIN_NAME = "gradle-properties"
 
+    dependencies: Dependencies = Field(default_factory=dict)
+    optional_dependencies: dict[str, Dependencies] = Field(default_factory=dict)
+    path: GradlePath = Field(default="gradle.properties", validate_default=True)
+
     def update(self, metadata: dict[str, Any]) -> None:
+        """Implements MetadataHookInterface."""
         self.set_dynamic(
             metadata,
             "dependencies",
-            self.parse_dependencies(self.typed_config.dependencies),
+            self.parse_dependencies(self.dependencies),
         )
 
         self.set_dynamic(
@@ -28,7 +31,7 @@ class GradlePropertiesMetadataHook(MetadataHookInterface):
             "optional-dependencies",
             {
                 key: self.parse_dependencies(value)
-                for key, value in self.typed_config.optional_dependencies.items()
+                for key, value in self.optional_dependencies.items()
             },
         )
 
@@ -53,23 +56,5 @@ class GradlePropertiesMetadataHook(MetadataHookInterface):
         metadata[key] = value
 
     @cached_property
-    def typed_config(self):
-        return self.Config.model_validate(self.config)
-
-    @cached_property
     def properties(self):
-        return load_properties(self.typed_config.path)
-
-    class Config(KebabModel):
-        dependencies: Dependencies = Field(default_factory=list)
-        optional_dependencies: dict[str, Dependencies] = Field(default_factory=dict)
-        path: Path = Path("gradle.properties")
-
-        @model_validator(mode="after")
-        def _prepend_gradle_dir(self):
-            gradle_dir = os.getenv("HATCH_GRADLE_DIR")
-            if gradle_dir is None:
-                return self
-
-            self.path = Path(gradle_dir) / self.path
-            return self
+        return load_properties(self.path)
