@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Iterator
 
@@ -10,11 +11,17 @@ from hatch_gradle_version.common.model import GradlePath, HookModel
 
 Dependencies = list[str | GradleDependency]
 
+PLACEHOLDER_REGEX = re.compile(r"\{([a-zA-Z0-9_.\-]+)\}")
+
 
 class BaseMetadataHook(HookModel, MetadataHookInterface, ABC):
     dependencies: Dependencies = Field(default_factory=dict)
     optional_dependencies: dict[str, Dependencies] = Field(default_factory=dict)
     path: GradlePath
+
+    @abstractmethod
+    def get_format_value(self, key: str) -> Any:
+        ...
 
     @abstractmethod
     def parse_gradle_dependency(self, dependency: GradleDependency) -> str:
@@ -42,7 +49,11 @@ class BaseMetadataHook(HookModel, MetadataHookInterface, ABC):
         for dependency in dependencies:
             match dependency:
                 case str():
-                    yield dependency
+                    key_values = {
+                        key: self.get_format_value(key)
+                        for key in PLACEHOLDER_REGEX.findall(dependency)
+                    }
+                    yield dependency.format_map(key_values)
                 case GradleDependency():
                     yield self.parse_gradle_dependency(dependency)
 
