@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import warnings
 from pathlib import Path
+from typing import Callable
 
 import jproperties  # pyright: ignore[reportMissingTypeStubs]
 from packaging.version import Version
@@ -36,17 +37,30 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
     extra_versions: dict[str, str]
 
     @classmethod
-    def from_properties(cls, p: jproperties.Properties, key: str):
+    def from_properties(
+        cls,
+        p: jproperties.Properties,
+        key: str,
+        fmt: Callable[[str], str] | None,
+    ):
         return cls.from_raw(
             raw_version=str(p[key].data),
             extra_versions={key: repr(value.data) for key, value in p.items()},
+            fmt=fmt,
         )
 
     @classmethod
-    def from_raw(cls, raw_version: str, extra_versions: dict[str, str]):
-        match = GRADLE_VERSION_RE.match(raw_version)
+    def from_raw(
+        cls,
+        raw_version: str,
+        extra_versions: dict[str, str],
+        fmt: Callable[[str], str] | None,
+    ):
+        fmt_version = fmt(raw_version) if fmt else raw_version
+
+        match = GRADLE_VERSION_RE.match(fmt_version)
         if match is None:
-            raise ValueError(f"Failed to parse version: {raw_version}")
+            raise ValueError(f"Failed to parse version: {fmt_version}")
 
         data = match.groupdict() | {
             "raw_version": raw_version,

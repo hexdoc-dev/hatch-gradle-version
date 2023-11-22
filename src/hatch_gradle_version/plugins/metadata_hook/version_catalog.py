@@ -1,7 +1,7 @@
-import tomllib
 from functools import cached_property
 from pathlib import Path
 
+import tomllib
 from pydantic import TypeAdapter
 
 from hatch_gradle_version.common.gradle import GradleDependency, GradleVersion
@@ -20,7 +20,7 @@ class VersionCatalogMetadataHook(BaseMetadataHook):
 
     def parse_gradle_dependency(self, dependency: GradleDependency):
         raw_version = self.versions[dependency.key]
-        gradle_version = GradleVersion.from_raw(raw_version, self.versions)
+        gradle_version = GradleVersion.from_raw(raw_version, self.versions, None)
         return dependency.version_specifier(gradle_version)
 
     @cached_property

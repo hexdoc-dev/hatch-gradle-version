@@ -23,7 +23,7 @@ class JSONVersionSource(BaseVersionSource):
         for key in self.key:
             raw_version = raw_version[key]
 
-        return GradleVersion.from_raw(raw_version, {})
+        return GradleVersion.from_raw(raw_version, {}, self.fmt_raw_gradle_version)
 
     @field_validator("key", mode="before")
     @classmethod

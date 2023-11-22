@@ -24,6 +24,7 @@ class GradlePropertiesMetadataHook(BaseMetadataHook):
         gradle_version = GradleVersion.from_properties(
             p=self.properties,
             key=dependency.key,
+            fmt=None,
         )
         return dependency.version_specifier(gradle_version)
 

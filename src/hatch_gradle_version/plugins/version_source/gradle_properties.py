@@ -14,4 +14,4 @@ class GradlePropertiesVersionSource(BaseVersionSource):
 
     def get_gradle_version(self) -> GradleVersion:
         p = load_properties(self.gradle_path)
-        return GradleVersion.from_properties(p, self.key)
+        return GradleVersion.from_properties(p, self.key, self.fmt_raw_gradle_version)

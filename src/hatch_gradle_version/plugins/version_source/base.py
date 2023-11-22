@@ -29,10 +29,26 @@ class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
     source: str
     py_path: ProjectPath
     scheme: str | None = None
+    gradle_version_regex: re.Pattern[str] | None = None
+    """Should contain exactly one match group, representing the part of the raw Gradle
+    version to keep."""
 
     @abstractmethod
     def get_gradle_version(self) -> GradleVersion:
         ...
+
+    def fmt_raw_gradle_version(self, raw: str) -> str:
+        if self.gradle_version_regex is None:
+            return raw
+
+        match = self.gradle_version_regex.match(raw)
+        if match is None:
+            raise ValueError(f"gradle_version_regex failed to match version: {raw}")
+
+        if len(match.groups()) < 1:
+            raise ValueError("gradle_version_regex must have at least 1 group, got 0")
+
+        return match[1]
 
     def get_version_data(self):
         gradle_version = self.get_gradle_version()
