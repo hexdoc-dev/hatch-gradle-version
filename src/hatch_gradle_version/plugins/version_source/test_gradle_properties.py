@@ -58,7 +58,7 @@ def test_gloopy(tmp_path: Path, monkeypatch: MonkeyPatch):
     gradle_version = hook.get_gradle_version()
 
     assert gradle_version == GradleVersion(
-        raw_version="1.19.2-0.1.0",
+        raw_version="0.1.0",
         version="0.1.0",
         rc=None,
         build=None,

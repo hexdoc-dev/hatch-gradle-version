@@ -56,11 +56,12 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
         extra_versions: dict[str, str],
         fmt: Callable[[str], str] | None,
     ):
-        fmt_version = fmt(raw_version) if fmt else raw_version
+        if fmt:
+            raw_version = fmt(raw_version)
 
-        match = GRADLE_VERSION_RE.match(fmt_version)
+        match = GRADLE_VERSION_RE.match(raw_version)
         if match is None:
-            raise ValueError(f"Failed to parse version: {fmt_version}")
+            raise ValueError(f"Failed to parse version: {raw_version}")
 
         data = match.groupdict() | {
             "raw_version": raw_version,
