@@ -23,6 +23,7 @@ class VersionData(TypedDict):
     gradle_version: str
     py_version: str
     extra_versions: dict[str, str]
+    full_gradle_version: GradleVersion
 
 
 class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
@@ -61,6 +62,7 @@ class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
             gradle_version=str(gradle_version),
             py_version=py_version,
             extra_versions=gradle_version.extra_versions,
+            full_gradle_version=gradle_version,
         )
 
         # write here because otherwise the other version constants get outdated
