@@ -5,10 +5,11 @@ from typing import Any, TypedDict
 from casefy import casefy
 from hatchling.version.core import DEFAULT_PATTERN
 from hatchling.version.source.plugin.interface import VersionSourceInterface
+from pydantic import AliasChoices, Field
 
 from hatch_gradle_version.common.codegen import write_code
 from hatch_gradle_version.common.gradle import GradleVersion
-from hatch_gradle_version.common.model import HookModel, ProjectPath
+from hatch_gradle_version.common.model import HookModel, KebabModel, ProjectPath
 
 PY_VERSION_REGEX = re.compile(
     r'(?i)^(PY_VERSION) *= *([\'"])v?(?P<version>.+?)\2',
@@ -26,30 +27,35 @@ class VersionData(TypedDict):
     full_gradle_version: GradleVersion
 
 
+class GradleVersionRegex(KebabModel):
+    pattern: re.Pattern[str] = Field(
+        validation_alias=AliasChoices("pattern", "pat", "regex"),
+    )
+    replacement: str = Field(
+        r"\1",
+        validation_alias=AliasChoices("replacement", "repl"),
+    )
+
+
 class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
     source: str
     py_path: ProjectPath
     scheme: str | None = None
-    gradle_version_regex: re.Pattern[str] | None = None
-    """Should contain exactly one match group, representing the part of the raw Gradle
-    version to keep."""
+    gradle_version_regex: re.Pattern[str] | GradleVersionRegex | None = None
+    """If this is a standalone regex, it should contain exactly one match group,
+    representing the part of the raw Gradle version to keep."""
 
     @abstractmethod
-    def get_gradle_version(self) -> GradleVersion:
-        ...
+    def get_gradle_version(self) -> GradleVersion: ...
 
     def fmt_raw_gradle_version(self, raw: str) -> str:
-        if self.gradle_version_regex is None:
-            return raw
-
-        match = self.gradle_version_regex.match(raw)
-        if match is None:
-            raise ValueError(f"gradle_version_regex failed to match version: {raw}")
-
-        if len(match.groups()) < 1:
-            raise ValueError("gradle_version_regex must have at least 1 group, got 0")
-
-        return match[1]
+        match self.gradle_version_regex:
+            case re.Pattern() as pattern:
+                return pattern.sub(r"\1", raw)
+            case GradleVersionRegex(pattern=pattern, replacement=replacement):
+                return pattern.sub(replacement, raw)
+            case None:
+                return raw
 
     def get_version_data(self):
         gradle_version = self.get_gradle_version()

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hatch-gradle-version"
-version = "0.9.6"
+version = "0.9.7"
 authors = [
     { name="object-Object", email="object@objectobject.ca" },
 ]
@@ -46,6 +46,9 @@ gradle_version = "hatch_gradle_version._hooks"
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
+filterwarnings = [
+    'ignore:Dependency on package .+? will ONLY accept:UserWarning:hatch_gradle_version.common.gradle',
+]
 
 # formatting/linting
 
