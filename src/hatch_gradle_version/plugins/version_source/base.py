@@ -48,14 +48,15 @@ class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
     @abstractmethod
     def get_gradle_version(self) -> GradleVersion: ...
 
-    def fmt_raw_gradle_version(self, raw: str) -> str:
+    def fmt_raw_gradle_version(self, raw: str, extra: dict[str, str]) -> str:
         match self.gradle_version_regex:
             case re.Pattern() as pattern:
-                return pattern.sub(r"\1", raw)
+                parsed = pattern.sub(r"\1", raw)
             case GradleVersionRegex(pattern=pattern, replacement=replacement):
-                return pattern.sub(replacement, raw)
+                parsed = pattern.sub(replacement, raw)
             case None:
-                return raw
+                parsed = raw
+        return parsed.format_map(extra)
 
     def get_version_data(self):
         gradle_version = self.get_gradle_version()
@@ -109,7 +110,7 @@ class BaseVersionSource(HookModel, VersionSourceInterface, ABC):
             FULL_VERSION = "{version}"
             """,
             *(
-                f"{format_key(key, 'GRADLE_VERSION', 'FULL_VERSION')}={value}"
+                f"{format_key(key, 'GRADLE_VERSION', 'FULL_VERSION')}={value!r}"
                 for key, value in sorted(version_data["extra_versions"].items())
             ),
         )

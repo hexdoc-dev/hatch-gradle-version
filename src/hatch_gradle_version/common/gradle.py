@@ -41,11 +41,11 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
         cls,
         p: jproperties.Properties,
         key: str,
-        fmt: Callable[[str], str] | None,
+        fmt: Callable[[str, dict[str, str]], str] | None,
     ):
         return cls.from_raw(
             raw_version=str(p[key].data),
-            extra_versions={key: repr(value.data) for key, value in p.items()},
+            extra_versions={key: value.data for key, value in p.items()},
             fmt=fmt,
         )
 
@@ -54,10 +54,10 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
         cls,
         raw_version: str,
         extra_versions: dict[str, str],
-        fmt: Callable[[str], str] | None,
+        fmt: Callable[[str, dict[str, str]], str] | None,
     ):
         if fmt:
-            raw_version = fmt(raw_version)
+            raw_version = fmt(raw_version, extra_versions)
 
         match = GRADLE_VERSION_RE.match(raw_version)
         if match is None:
