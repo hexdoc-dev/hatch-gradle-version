@@ -1,4 +1,5 @@
 import copy
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -70,4 +71,78 @@ def test_gradle_properties_deps(
     assert metadata == orig_metadata | {
         "dependencies": [full_version],
         "optional-dependencies": {},
+    }
+
+
+@pytest.mark.parametrize(
+    ["dependency", "result"],
+    [
+        ("", ""),
+        ("foo", "foo"),
+        ("{foo", "{foo"),
+        ("{foo}", "{foo}"),
+        ("{placeholder}", "result"),
+        ("{{placeholder}}", "{result}"),
+        ("{placeholder}{placeholder}", "resultresult"),
+        ("{placeholder} {other}", "result value"),
+        ("{other} {placeholder}", "value result"),
+        ("foo bar baz", "foo bar baz"),
+        ("{foo} bar baz", "{foo} bar baz"),
+        ("foo {bar} baz", "foo {bar} baz"),
+        ("foo bar {baz}", "foo bar {baz}"),
+        ("{placeholder} bar baz", "result bar baz"),
+        ("foo {placeholder} baz", "foo result baz"),
+        ("foo bar {placeholder}", "foo bar result"),
+        (
+            "package @ {root:uri}/path/to/package-0.1.0-py3-none-any.whl",
+            "package @ {root:uri}/path/to/package-0.1.0-py3-none-any.whl",
+        ),
+    ],
+)
+def test_placeholders(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    dependency: str,
+    result: str,
+):
+    # arrange
+    monkeypatch.setenv("HATCH_GRADLE_DIR", "gradle_dir")
+
+    gradle_properties = tmp_path / "gradle_dir" / "gradle.properties"
+    gradle_properties.parent.mkdir()
+    gradle_properties.write_text(
+        textwrap.dedent(
+            """\
+            placeholder=result
+            other=value
+            """
+        )
+    )
+
+    hook = GradlePropertiesMetadataHook(
+        tmp_path.as_posix(),
+        {
+            "dependencies": [dependency],
+            "optional-dependencies": {"dev": [dependency]},
+        },
+    )
+
+    metadata = {
+        "dynamic": [
+            "dependencies",
+            "optional-dependencies",
+        ],
+    }
+
+    # act
+    hook.update(metadata)
+
+    # assert
+    assert metadata == {
+        "dynamic": [
+            "dependencies",
+            "optional-dependencies",
+        ],
+        "dependencies": [result],
+        "optional-dependencies": {"dev": [result]},
     }

@@ -17,7 +17,7 @@ class VersionCatalogMetadataHook(BaseMetadataHook):
     path: GradlePath = Path("gradle/libs.versions.toml")
 
     def get_format_value(self, key: str):
-        return self.versions[key]
+        return self.versions.get(key)
 
     def parse_gradle_dependency(self, dependency: GradleDependency):
         raw_version = self.versions[dependency.key]

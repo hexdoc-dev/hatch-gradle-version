@@ -17,8 +17,9 @@ class GradlePropertiesMetadataHook(BaseMetadataHook):
 
     path: GradlePath = Path("gradle.properties")
 
-    def get_format_value(self, key: str) -> Any:
-        return self.properties[key].data
+    def get_format_value(self, key: str) -> Any | None:
+        if prop := self.properties.get(key):
+            return prop.data
 
     def parse_gradle_dependency(self, dependency: GradleDependency):
         gradle_version = GradleVersion.from_properties(

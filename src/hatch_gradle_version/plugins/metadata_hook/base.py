@@ -20,12 +20,10 @@ class BaseMetadataHook(HookModel, MetadataHookInterface, ABC):
     path: GradlePath
 
     @abstractmethod
-    def get_format_value(self, key: str) -> Any:
-        ...
+    def get_format_value(self, key: str) -> Any | None: ...
 
     @abstractmethod
-    def parse_gradle_dependency(self, dependency: GradleDependency) -> str:
-        ...
+    def parse_gradle_dependency(self, dependency: GradleDependency) -> str: ...
 
     def update(self, metadata: dict[str, Any]) -> None:
         """Implements MetadataHookInterface."""
@@ -49,11 +47,19 @@ class BaseMetadataHook(HookModel, MetadataHookInterface, ABC):
         for dependency in dependencies:
             match dependency:
                 case str():
-                    key_values = {
-                        key: self.get_format_value(key)
-                        for key in PLACEHOLDER_REGEX.findall(dependency)
-                    }
-                    yield dependency.format_map(key_values)
+                    result = ""
+                    index = 0
+                    for match in PLACEHOLDER_REGEX.finditer(dependency):
+                        # if we fail to find a placeholder, just leave it in the string
+                        # this is especially important for eg. Hatch's `{root:uri}`
+                        if value := self.get_format_value(match.group(1)):
+                            # add everything before the placeholder, then the value
+                            result += dependency[index : match.start()] + value
+                            # move the index to the character after the placeholder
+                            index = match.end()
+                    # add anything after the final placeholder
+                    result += dependency[index:]
+                    yield result
                 case GradleDependency():
                     yield self.parse_gradle_dependency(dependency)
 
