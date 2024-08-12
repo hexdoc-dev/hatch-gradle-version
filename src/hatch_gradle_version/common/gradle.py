@@ -43,6 +43,8 @@ class GradleVersion(DefaultModel, arbitrary_types_allowed=True):
         key: str,
         fmt: Callable[[str, dict[str, str]], str] | None,
     ):
+        if key not in p:
+            raise KeyError(f"Key not found in gradle.properties: {key}")
         return cls.from_raw(
             raw_version=str(p[key].data),
             extra_versions={key: value.data for key, value in p.items()},
