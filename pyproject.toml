@@ -16,7 +16,8 @@ requires-python = ">=3.11"
 dependencies = [
     "hatchling~=1.18",
     "jproperties~=2.1",
-    "pydantic~=2.3",
+    # 2.12.0: https://github.com/pydantic/pydantic/issues/12347
+    "pydantic~=2.3,!=2.12.0",
     "casefy~=0.1.7",
     "black==23.7.0",
 ]

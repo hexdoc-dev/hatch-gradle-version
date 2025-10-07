@@ -111,7 +111,11 @@ class HookModel(KebabModel, validate_default=True):
             return value
         root = Path(root)
 
-        assert info.field_name
+        if info.field_name is None:
+            raise RuntimeError(
+                f"Expected field_name to be a string, but got None. This is probably a bug.\n{info=}"
+            )
+
         field_info = cls.model_fields[info.field_name]
 
         for annotation in field_info.metadata:
