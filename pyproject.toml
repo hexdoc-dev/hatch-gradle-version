@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hatch-gradle-version"
-version = "0.9.11"
+version = "0.9.12"
 authors = [
     { name="object-Object", email="object@objectobject.ca" },
 ]
